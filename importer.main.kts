@@ -1,10 +1,14 @@
 #!/usr/bin/env kotlin
 
-@file:Repository("https://repo1.maven.org/maven2") @file:DependsOn("io.ktor:ktor-client-core-jvm:1.6.8") @file:DependsOn(
-    "io.ktor:ktor-client-cio-jvm:1.6.8"
-) @file:DependsOn("io.ktor:ktor-client-auth-jvm:1.6.8") @file:DependsOn("io.ktor:ktor-client-logging-jvm:1.6.8") @file:DependsOn(
-    "io.ktor:ktor-client-json-jvm:1.6.8"
-) @file:DependsOn("io.ktor:ktor-client-gson:1.6.8") @file:DependsOn("com.ibm.icu:icu4j:68.1") @file:DependsOn("me.xdrop:fuzzywuzzy:1.3.0")
+@file:Repository("https://repo1.maven.org/maven2")
+@file:DependsOn("io.ktor:ktor-client-core-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-cio-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-auth-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-logging-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-json-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-gson:1.6.8")
+@file:DependsOn("com.ibm.icu:icu4j:68.1")
+@file:DependsOn("me.xdrop:fuzzywuzzy:1.3.0")
 
 import com.ibm.icu.text.Transliterator
 import io.ktor.client.*
