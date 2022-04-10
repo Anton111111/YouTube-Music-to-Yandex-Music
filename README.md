@@ -13,6 +13,7 @@ Before run commands you have to do the following steps:
 
 #### Import YouTube Music to Yandex Music
 Just run the command:
+
    `importer.main.kts`
 
 After the script is finished you will see the report. You will have to manually add albums that were not found.
@@ -21,6 +22,7 @@ Just click on URLs.
 #### Getting Yandex Music auth token
 You might want to like the tracks from albums by IDs.
 Run the command:
+
    `importer.main.kts -lts "<album_ids>"`
 
 album_ids - is comma separated album IDs from Yandex Music.
