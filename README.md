@@ -16,6 +16,10 @@ Just run the command:
 
    `importer.main.kts`
 
+if you want like tracks from albums run the command:
+
+`importer.main.kts -wt`
+
 After the script is finished you will see the report. You will have to manually add albums that were not found.
 Just click on URLs.
 
@@ -27,6 +31,10 @@ Run the command:
 
 album_ids - is comma separated album IDs from Yandex Music.
 
+## Dislike all tracks from Yandex Music
+Just run the command:
+
+`importer.main.kts -rct`
 
 
 ## Getting Yandex Music auth token
