@@ -1,12 +1,16 @@
 #!/usr/bin/env kotlin
 
-@file:Repository("https://repo1.maven.org/maven2") @file:DependsOn("io.ktor:ktor-client-core-jvm:1.6.8") @file:DependsOn(
-    "io.ktor:ktor-client-cio-jvm:1.6.8"
-) @file:DependsOn("io.ktor:ktor-client-auth-jvm:1.6.8") @file:DependsOn("io.ktor:ktor-client-logging-jvm:1.6.8") @file:DependsOn(
-    "io.ktor:ktor-client-json-jvm:1.6.8"
-) @file:DependsOn("io.ktor:ktor-client-gson:1.6.8") @file:DependsOn("com.ibm.icu:icu4j:68.1") @file:DependsOn("me.xdrop:fuzzywuzzy:1.3.0")
+@file:Repository("https://repo1.maven.org/maven2")
+@file:DependsOn("io.ktor:ktor-client-core-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-cio-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-auth-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-logging-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-json-jvm:1.6.8")
+@file:DependsOn("io.ktor:ktor-client-gson:1.6.8")
+@file:DependsOn("com.ibm.icu:icu4j:68.1")
+@file:DependsOn("me.xdrop:fuzzywuzzy:1.3.0")
 
-
+import com.google.gson.Gson
 import com.ibm.icu.text.Transliterator
 import io.ktor.client.*
 import io.ktor.client.features.*
@@ -19,10 +23,10 @@ import kotlinx.coroutines.sync.withLock
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import java.io.File
 import java.net.URLEncoder
+import kotlin.system.exitProcess
 
-val csvPath = "/Users/anton/ytm.csv"
-val token = "AQAAAAATMT22AAG8XqwA7ckQP0h1jgk2AAfAdsk"
-val userId = "anton.sergeevich.potekhin"
+
+val conf: Conf = Gson().fromJson(File("config.json").readText(), Conf::class.java)
 val minFuzzyRatio = 96
 val delayForLikes = 100L
 val mutex = Mutex()
@@ -45,7 +49,7 @@ val client = HttpClient {
         serializer = GsonSerializer()
     }
     defaultRequest {
-        header("Authorization", "OAuth $token")
+        header("Authorization", "OAuth ${conf.token}")
     }
 }
 
@@ -117,12 +121,12 @@ suspend fun getAlbumWithTracks(id: Int): Response<Album> =
     client.get("https://api.music.yandex.net/albums/$id/with-tracks")
 
 suspend fun getLibraryTracks(): Response<Library> =
-    client.get("https://api.music.yandex.net/users/$userId/likes/tracks")
+    client.get("https://api.music.yandex.net/users/${conf.userId}/likes/tracks")
 
 
 suspend fun likeAlbums(albumIds: List<Int>) {
     mutexLike.withLock {
-        client.post<Response<Any>>("https://api.music.yandex.net/users/$userId/likes/albums/add-multiple") {
+        client.post<Response<Any>>("https://api.music.yandex.net/users/${conf.userId}/likes/albums/add-multiple") {
             parameter("album-ids", albumIds.joinToString(","))
         }
         delay(delayForLikes)
@@ -131,7 +135,7 @@ suspend fun likeAlbums(albumIds: List<Int>) {
 
 suspend fun likeTracks(trackIds: List<Int>) {
     mutexLike.withLock {
-        client.post<Response<Any>>("https://api.music.yandex.net/users/$userId/likes/tracks/add-multiple") {
+        client.post<Response<Any>>("https://api.music.yandex.net/users/${conf.userId}/likes/tracks/add-multiple") {
             parameter("track-ids", trackIds.joinToString(","))
         }
         delay(delayForLikes)
@@ -140,7 +144,7 @@ suspend fun likeTracks(trackIds: List<Int>) {
 
 suspend fun dislikeTracks(trackIds: List<Int>) {
     mutexLike.withLock {
-        client.post<Response<Any>>("https://api.music.yandex.net/users/$userId/likes/tracks/remove") {
+        client.post<Response<Any>>("https://api.music.yandex.net/users/${conf.userId}/likes/tracks/remove") {
             parameter("track-ids", trackIds.joinToString(","))
         }
         delay(delayForLikes)
@@ -149,7 +153,7 @@ suspend fun dislikeTracks(trackIds: List<Int>) {
 
 suspend fun likeArtists(artistIds: List<Int>) {
     mutexLike.withLock {
-        client.submitForm<Response<Any>>("https://api.music.yandex.net/users/$userId/likes/artists/add-multiple") {
+        client.submitForm<Response<Any>>("https://api.music.yandex.net/users/${conf.userId}/likes/artists/add-multiple") {
             parameter("artist-ids", artistIds.joinToString(","))
         }
         delay(delayForLikes)
@@ -365,7 +369,7 @@ suspend fun likeAlbumTracks(albumIds: List<Int>) = withContext(Dispatchers.IO) {
 }
 
 suspend fun import(withTracks: Boolean) = withContext(Dispatchers.IO) {
-    val input = getDataForImport(csvPath)
+    val input = getDataForImport(conf.csvPath)
 
     val jobs: MutableList<Job> = mutableListOf()
 
@@ -407,7 +411,7 @@ suspend fun import(withTracks: Boolean) = withContext(Dispatchers.IO) {
     }
 }
 
-
+data class Conf(val csvPath: String, val userId: String, val token: String)
 data class Response<T>(val result: T)
 data class Library(val library: LibraryTracks)
 data class LibraryTracks(val tracks: List<LibraryTrack>)

@@ -1,0 +1,5 @@
+{
+    "csvPath": "<csv_path>",
+    "userId": "<user_id>",
+    "token": "<token>"
+}

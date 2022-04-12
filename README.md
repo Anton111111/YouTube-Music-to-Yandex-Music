@@ -6,10 +6,17 @@ Also the script likes all tracks from founded albums.
 Before run commands you have to do the following steps:
 1. Go to Google Takeout (https://takeout.google.com/)
    and export "Music library songs" from "YouTube and YouTube Music" in csv format.
-2. Edit importer.main.kts file to set variables:
-   1. csvPath - path to exported library on csv format
-   2. token - your Yandex Music auth token
-   3. userId - your Yandex Music user id (login)
+2. Generate config.json file
+   
+
+## Generate config.json
+To generate config.json start the command:
+
+`generate_config.main.kts <yandex_username> <yandex_password> <path_to_csv>`
+
+path_to_csv - path to exported library on csv format
+
+Or you can create manually file config.json from config.json.example.
 
 ## Import YouTube Music to Yandex Music
 Just run the command:
