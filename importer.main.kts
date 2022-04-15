@@ -123,6 +123,9 @@ suspend fun getAlbumWithTracks(id: Int): Response<Album> =
 suspend fun getLibraryTracks(): Response<Library> =
     client.get("https://api.music.yandex.net/users/${conf.userId}/likes/tracks")
 
+suspend fun getLibraryAlbums(): Response<List<Album>> =
+    client.get("https://api.music.yandex.net/users/${conf.userId}/likes/albums")
+
 
 suspend fun likeAlbums(albumIds: List<Int>) {
     mutexLike.withLock {
@@ -139,6 +142,31 @@ suspend fun likeTracks(trackIds: List<Int>) {
             parameter("track-ids", trackIds.joinToString(","))
         }
         delay(delayForLikes)
+    }
+}
+
+
+suspend fun createPlaylist(title: String) {
+    mutexLike.withLock {
+        client.post<Response<Any>>("https://api.music.yandex.net/users/${conf.userId}/playlists/create") {
+            parameter("title", title)
+            parameter("visibility", "private")
+        }
+        delay(delayForLikes)
+    }
+}
+
+suspend fun getPlaylist(playlist: Int) =
+    client.post<Response<List<Playlist>>>("https://api.music.yandex.net/users/${conf.userId}/playlists") {
+        parameter("kinds", playlist)
+    }
+
+
+suspend fun addTracksToPlaylist(playlist: Int, revision: Int, tracks: List<LibraryTrack>) {
+    client.post<Response<Any>>("https://api.music.yandex.net/users/${conf.userId}/playlists/$playlist/change") {
+        parameter("kind", playlist)
+        parameter("revision", revision)
+        parameter("diff", Gson().toJson(listOf(Diff(op = "insert", at = 0, tracks = tracks))))
     }
 }
 
@@ -314,6 +342,7 @@ sealed class Action {
     data class Import(val withTracks: Boolean = false) : Action()
     data class LikeAlbumTracks(val albumIds: List<Int>) : Action()
     object RemoveCollectionTracks : Action()
+    data class AllLibraryTracksToPlaylist(val playlist: Int) : Action()
 }
 
 var action: Action = Action.Import()
@@ -327,6 +356,10 @@ args.forEachIndexed { index, arg ->
     if (arg == "-wt") {
         action = Action.Import(withTracks = true)
     }
+
+    if (arg == "-attp" && args.size >= index && args[index + 1].isNotBlank()) {
+        action = Action.AllLibraryTracksToPlaylist(playlist = args[index + 1].toInt())
+    }
 }
 
 runBlocking {
@@ -334,7 +367,36 @@ runBlocking {
         is Action.LikeAlbumTracks -> likeAlbumTracks(a.albumIds)
         Action.RemoveCollectionTracks -> removeTracksFromCollection()
         is Action.Import -> import(withTracks = a.withTracks)
+        is Action.AllLibraryTracksToPlaylist -> allLibraryTracksToPlaylist(a.playlist)
     }
+}
+
+suspend fun allLibraryTracksToPlaylist(playlistId: Int) = withContext(Dispatchers.IO) {
+    val ids = getLibraryAlbums().result.map { it.id }
+    val playlist = getPlaylist(playlistId).result.first()
+    var revision = playlist.revision
+    val jobs: MutableList<Job> = mutableListOf()
+    ids.forEach { albumId ->
+        jobs.add(launch {
+            val album = getAlbumWithTracks(albumId)
+            if (album.result.metaType == "music") {
+                album.result.volumes.forEachIndexed { index, tracks ->
+                    mutex.withLock {
+                        printlnColored(
+                            "Adding tracks from ${album.result.artists.first().name} - ${album.result.title} - $index",
+                            TextColor.CYAN
+                        )
+                        addTracksToPlaylist(
+                            playlist.kind,
+                            revision = revision,
+                            tracks.map { LibraryTrack(id = it.id, albumId = albumId) })
+                        revision += 1
+                    }
+                }
+            }
+        })
+    }
+    jobs.joinAll()
 }
 
 suspend fun removeTracksFromCollection() = withContext(Dispatchers.IO) {
@@ -422,8 +484,16 @@ data class ArtistAlbums(val albums: List<Album>)
 data class SearchAlbumsResults(val albums: Albums?)
 data class Albums(val results: List<Album>)
 data class Album(
-    val id: Int, val title: String, val version: String?, val artists: List<Artist>, val volumes: List<List<Track>>
+    val id: Int,
+    val title: String,
+    val version: String?,
+    val artists: List<Artist>,
+    val volumes: List<List<Track>>,
+    val metaType: String
 )
+
+data class Playlist(val kind: Int, val title: String, val revision: Int)
+data class Diff(val op: String, val at: Int, val tracks: List<LibraryTrack>)
 
 data class LibraryTrack(val id: Int, val albumId: Int)
 data class Track(val id: Int, val title: String)

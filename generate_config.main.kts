@@ -59,15 +59,13 @@ runBlocking {
         println("CSV is not exists")
         return@runBlocking
     }
-    //val token = login(username, password)
-    val token = Token(access_token = "AQAAAAATMT22AAG8XqwA7ckQP0h1jgk2AAfAdsk")
+    val token = login(username, password)
     if (token.access_token.isBlank()) {
         println("Can't get token")
         return@runBlocking
     }
     println("Token: ${token.access_token}")
-    //val account = accountStatus(token).result.account
-    val account = Account(login = "anton.sergeevich.potekhin")
+    val account = accountStatus(token).result.account
     if (account.login.isBlank()) {
         println("Can't get login")
         return@runBlocking
@@ -78,7 +76,7 @@ runBlocking {
         jsonExample
             .replace("<csv_path>", csvPath)
             .replace("<user_id>", account.login)
-            .replace("<token>", password)
+            .replace("<token>", token.access_token)
     )
 }
 

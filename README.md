@@ -43,6 +43,11 @@ Just run the command:
 
 `importer.main.kts -rct`
 
+## Add all tracks from  library albums to playlist
+Just run the command:
+
+`importer.main.kts -attp <playlist_id>`
+
 
 ## Getting Yandex Music auth token
 Call:
