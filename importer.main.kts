@@ -381,16 +381,20 @@ suspend fun allLibraryTracksToPlaylist(playlistId: Int) = withContext(Dispatcher
             val album = getAlbumWithTracks(albumId)
             if (album.result.metaType == "music") {
                 album.result.volumes.forEachIndexed { index, tracks ->
-                    mutex.withLock {
-                        printlnColored(
-                            "Adding tracks from ${album.result.artists.first().name} - ${album.result.title} - $index",
-                            TextColor.CYAN
-                        )
-                        addTracksToPlaylist(
-                            playlist.kind,
-                            revision = revision,
-                            tracks.map { LibraryTrack(id = it.id, albumId = albumId) })
-                        revision += 1
+                    val filteredTracks =
+                        tracks.filter { !playlist.tracks.any { lt -> lt.id == it.id && lt.albumId == albumId } }
+                    if (filteredTracks.isNotEmpty()) {
+                        mutex.withLock {
+                            printlnColored(
+                                "Adding tracks from ${album.result.artists.first().name} - ${album.result.title} - $index",
+                                TextColor.CYAN
+                            )
+                            addTracksToPlaylist(
+                                playlist.kind,
+                                revision = revision,
+                                filteredTracks.map { LibraryTrack(id = it.id, albumId = albumId) })
+                            revision += 1
+                        }
                     }
                 }
             }
@@ -492,7 +496,7 @@ data class Album(
     val metaType: String
 )
 
-data class Playlist(val kind: Int, val title: String, val revision: Int)
+data class Playlist(val kind: Int, val title: String, val revision: Int, val tracks: List<LibraryTrack>)
 data class Diff(val op: String, val at: Int, val tracks: List<LibraryTrack>)
 
 data class LibraryTrack(val id: Int, val albumId: Int)
