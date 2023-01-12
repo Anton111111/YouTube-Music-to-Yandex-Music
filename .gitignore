@@ -1,3 +1,5 @@
 config.json
+spotify_token.json
+spotify_client_creds.json
 lib/**
 .idea/**
