@@ -30,7 +30,7 @@ if you want like tracks from albums run the command:
 After the script is finished you will see the report. You will have to manually add albums that were not found.
 Just click on URLs.
 
-## Getting Yandex Music auth token
+## Like the tracks from albums
 You might want to like the tracks from albums by IDs.
 Run the command:
 

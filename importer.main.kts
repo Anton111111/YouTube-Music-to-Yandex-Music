@@ -368,6 +368,7 @@ runBlocking {
         Action.RemoveCollectionTracks -> removeTracksFromCollection()
         is Action.Import -> import(withTracks = a.withTracks)
         is Action.AllLibraryTracksToPlaylist -> allLibraryTracksToPlaylist(a.playlist)
+        else -> {}
     }
 }
 
